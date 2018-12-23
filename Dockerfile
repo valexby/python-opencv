@@ -1,4 +1,4 @@
-FROM python:3.5-alpine3.8
+FROM feisan/alpine-python3-tensorflow
 
 ENV OPENCV_VERSION 3.2.0
 ENV CC /usr/bin/clang
@@ -9,8 +9,8 @@ RUN apk add --no-cache \
       libpng \
       tiff \
       jasper \
-      ffmpeg
-RUN apk add --no-cache --virtual=build_dependencies \
+      ffmpeg \
+    && apk add --no-cache --virtual=build_dependencies \
       linux-headers \
       build-base \
       clang-dev \
@@ -20,8 +20,9 @@ RUN apk add --no-cache --virtual=build_dependencies \
       libpng-dev \
       tiff-dev \
       jasper-dev \
-      ffmpeg-dev && \
-    pip install --no-cache-dir numpy && \
+      ffmpeg-dev \
+      python3-dev && \
+    pip3 install --no-cache-dir numpy && \
     wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.tar.gz -O - | tar xz && \
     mkdir opencv-${OPENCV_VERSION}/cmaked && \
     cd opencv-${OPENCV_VERSION}/cmaked &&  \
@@ -39,9 +40,13 @@ RUN apk add --no-cache --virtual=build_dependencies \
       -DBUILD_TESTS=OFF \
       -DBUILD_PERF_TESTS=OFF \
       -DCMAKE_BUILD_TYPE=RELEASE \
+      -DBUILD_NEW_PYTHON_SUPPORT=ON \
+      -DBUILD_opencv_python3=ON \
+      -DHAVE_opencv_python3=ON \
       -DCMAKE_INSTALL_PREFIX=$(python -c "import sys; print(sys.prefix)") \
-      -DPYTHON_EXECUTABLE=$(which python) \
-      -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
+      -DPYTHON_EXECUTABLE=/usr/bin/python3.6 \
+      -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m \
+      -DPYTHON_LIBRARY=/usr/lib/libpython3.so \
       -DPYTHON_PACKAGES_PATH=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") .. && \
     ninja install && \
     rm -rf ~/.cache/pip && \
